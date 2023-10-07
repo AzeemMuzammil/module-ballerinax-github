@@ -160,11 +160,11 @@ isolated function getFormulatedStringQueryForGetIssueListAssignedToUser(string r
                                                                         returns string {
 
     if (lastPageCursor is string) {
-        return string `{"variables":{"owner":"${repositoryOwnerName}", "name":"${repositoryName}", 
-                        "assignee":"${assignee}", "perPageCount":${perPageCount}, 
+        return string `{"variables":{"owner":"${repositoryOwnerName}", "name":"${repositoryName}",
+                        "assignee":"${assignee}", "perPageCount":${perPageCount},
                         "lastPageCursor":"${lastPageCursor}"},"query":"${GET_ISSUE_LIST_ASSIGNED_TO_USER}"}`;
     } else {
-        return string `{"variables":{"owner":"${repositoryOwnerName}", "name":"${repositoryName}", 
+        return string `{"variables":{"owner":"${repositoryOwnerName}", "name":"${repositoryName}",
                         "assignee":"${assignee}", "perPageCount":${perPageCount}, "lastPageCursor":null},
                         "query":"${GET_ISSUE_LIST_ASSIGNED_TO_USER}"}`;
     }
@@ -518,6 +518,11 @@ isolated function getFormulatedStringQueryForGetProjectId(string repositoryOwner
                     + string `${GET_PROJECT_ID}"}`;
 }
 
+isolated function getFormulatedStringQueryForGetTopicId(string topicName) returns string {
+    return string `{"variables":{"topicName":"${topicName}"},"query":"`
+                    + string `${GET_TOPIC_ID}"}`;
+}
+
 isolated function getFormulatedStringQueryForGetUserOwnerId(string userName) returns string {
     return string `{"variables":{"userName":"${userName}"},"query":"`
                     + string `${GET_USER_OWNER_ID}"}`;
@@ -617,6 +622,22 @@ isolated function getUserId(string userName, string accessToken, http:Client gra
             return userId.toBalString();
         }
         return error ClientError("GitHub Client Error", body = user);
+    }
+    return graphQlData;
+}
+
+isolated function getTopicId(string topicName, string accessToken,
+                                http:Client graphQlClient) returns @tainted string|Error {
+    string stringQuery = getFormulatedStringQueryForGetTopicId(topicName);
+    map<json>|Error graphQlData = getGraphQlData(graphQlClient, accessToken, stringQuery);
+
+    if graphQlData is map<json> {
+        json topic = graphQlData.get(GIT_TOPIC);
+        if (topic is map<json>) {
+            json topicId = topic.get(GIT_ID);
+            return topicId.toBalString();
+        }
+        return error ClientError("GitHub Client Error", body = topic);
     }
     return graphQlData;
 }
